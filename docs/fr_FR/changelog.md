@@ -1,6 +1,11 @@
 ﻿Change Log
 ==========
 
+version 4
+----------
+* Correction du lancement du demon
+* Ajout double authentification
+
 version 3
 ----------
 * Passage v4

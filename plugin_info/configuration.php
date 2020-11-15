@@ -56,13 +56,20 @@ if (!isConnect()) {
 				<input type="password" class="configKey tooltips form-control" data-l1key="synoPwd" placeholder="Mot de passe"/>
 			</div>
 		</div>
+        <div class="form-group">
+			<label class="col-sm-3 control-label">{{Double authentification (optionnelle)}}</label>
+			<div class="col-sm-3">
+				<input type="password" class="configKey tooltips form-control" data-l1key="syno2auth" placeholder="Clé de sécurité"/>
+			</div>
+		</div>
 
-		<div class="form-group">
+<!--   		<div class="form-group">
 			<label class="col-sm-3 control-label">{{Découverte (Sauvegardez avant!)}}</label>
 			<div class="col-sm-2">
 				<a class="btn btn-default" id="bt_syncLecteur"><i class='fa fa-check'></i> {{Rechercher les lecteurs }}</a>
 			</div>
-		</div>	
+		</div>
+-->        
 	</fieldset>
 </form>
 <?php include_file('desktop', 'synovideo', 'js', 'synovideo');?>

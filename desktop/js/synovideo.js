@@ -58,13 +58,12 @@ $('#bt_syncLecteur').on('click', function () {
         },
         success: function (data) { // si l'appel a bien fonctionné
             if (data.state != 'ok') {
-                $('#div_alert').showAlert({message: data.result, level: 'danger'});
+                $('#div_alert').showAlert({message: data.result + 'toto', level: 'danger'});
                 return;
             }
             $('#div_alert').showAlert({message: '{{Synchronisation réussie}}', level: 'success'});
             location.reload();
         }
-            
     });
 });
 

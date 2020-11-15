@@ -41,16 +41,11 @@ class synovideo extends eqLogic {
 
 		switch($_action) {
 			case 'Start' :
-				self::GetSid();
 				self::deamon_start();
-				cache::set( 'SYNO.tacheV.off', true, 0,null) ;
 				self::deamon_changeAutoMode(1);
-				log::add('synovideo', 'info', '##########################################');
+                cache::set( 'SYNO.tacheV.off', true, 0,null) ;
 				log::add('synovideo', 'info', '# Démarrage de la tache Synovideo \'pull\' #');
-				log::add('synovideo', 'info', '##########################################');
-
 				break;
-
 			case 'Stop':
 				do {
 					self::deamon_stop();
@@ -58,11 +53,8 @@ class synovideo extends eqLogic {
 					$etat=self::deamon_info();
 				} while ($etat['state'] != 'nok');
 				self::deamon_changeAutoMode(0);
-				self::deleteSid();
 				cache::set( 'SYNO.tacheV.off', false, 0,null) ;
-				log::add('synovideo', 'info', '######################################');
 				log::add('synovideo', 'info', '# Arrêt de la tache Synovideo \'pull\' #');
-				log::add('synovideo', 'info', '######################################');
 				break;
 			default:
 				log::add('synovideo', 'debug', 'Tache_deamon : L\'action \'' . $_action .'\' n\'est pas reconnu.' );
@@ -86,8 +78,17 @@ class synovideo extends eqLogic {
 	}
 
     public static function deamon_start() {
+        
 		self::deamon_stop();
-		$deamon_info = self::deamon_info();
+		
+        $sessionsid=config::byKey('SYNO.SID.Session','synovideo');
+        if ($sessionsid=='') {
+            self::createURL();
+			self::updateAPIs();
+            self::getSid();
+        }
+        config::save('deamon','true','synovideo');
+        $deamon_info = self::deamon_info();
 		if ($deamon_info['launchable'] != 'ok') {
 			throw new Exception(__('Veuillez vérifier la configuration', __FILE__));
 		}
@@ -96,15 +97,18 @@ class synovideo extends eqLogic {
 		if (!is_object($cron)) {
 			throw new Exception(__('Tache cron introuvable', __FILE__));
 		}
-		$cron->run();  
+		$cron->run();
+        log::add('synovideo', 'info', '### Démarrage du deamon ###');        
 	}
 
     public static function deamon_stop() {
+        config::save('deamon','false','synovideo');
 		$cron = cron::byClassAndFunction('synovideo', 'pull');
 		if (!is_object($cron)) {
 			throw new Exception(__('Tache cron introuvable', __FILE__));
 		}
 		$cron->halt();
+        log::add('synovideo', 'info', '### Arrêt du deamon ###');
    }
 	
 	public static function pull($_eqLogic_id = null){ 
@@ -245,15 +249,19 @@ class synovideo extends eqLogic {
 			
 			self::createURL();
 			self::updateAPIs();
-			if( config::byKey('SYNO.SID.Session','synovideo') != ''){
-				self::deleteSid();
-			}
 			self::getSid();
 			self::deamon_start();
 			self::listLibrary();
 		}
 	}
 	
+    public function cron10(){
+        if ( config::byKey('deamon','synovideo')=='false' ){
+            log::add('synovideo', 'info',' Deamon désactivé, passage en cron10 pour éviter la déconnection' );
+            self::pull();
+		}
+	}
+    
 	public static function convertOctet($_octets) {
 	   $resultat = $_octets;
 		for ($i=0; $i < 8 && $resultat >= 1024; $i++) {
@@ -282,15 +290,11 @@ class synovideo extends eqLogic {
 	
 	public static function syncLecteur() {
 		//Récupération de tous les players
-log::add('synovideo', 'debug', '########## SyncLecteur   -> 1');
 		self::createURL();
-log::add('synovideo', 'debug', '########## SyncLecteur   -> 2');
 		self::updateAPIs();	
-log::add('synovideo', 'debug', '########## SyncLecteur   -> 3');
 		self::getSid();
-log::add('synovideo', 'debug', '########## SyncLecteur   -> 4');
 		self::listLibrary();
-log::add('synovideo', 'debug', '########## SyncLecteur   -> 5');
+
 		$compl_URL='limit=500000';
 		$obj=synovideo::appelURL('SYNO.VideoStation2.Controller.Device','list',null,null,null,$compl_URL);
 		foreach ($obj->data->device as $player){
@@ -315,12 +319,6 @@ log::add('synovideo', 'debug', '########## SyncLecteur   -> 5');
 				// Affectation des couleurs par défaut
 				$eqLogic->setDisplay('pgTextColor','#ffffff');
 				$eqLogic->setDisplay('pgBackColor','#83B700');
-				// Affectation d'un piece (Objet) si présent dans le nombre du Player
-				foreach (jeeObject::all() as $object){
-					if (stristr($player->name ,$object->getName())) {
-						$eqLogic->setObject_id($object->getId());
-					}
-				}
 				//Sauvegarde
 				$eqLogic->save();
 			}else{
@@ -328,11 +326,7 @@ log::add('synovideo', 'debug', '########## SyncLecteur   -> 5');
 				$eqLogic->setConfiguration('seekable', $player->seekable);
 				$eqLogic->setConfiguration('volume_adjustable', $player->volume_adjustable);
 				$eqLogic->setConfiguration('type', $player->type);
-				foreach (jeeObject::all() as $object){
-					if (stristr($player->name ,$object->getName())) {
-						$eqLogic->setObject_id($object->getId());
-					}
-				}
+
 				$eqLogic->save();
 			}
 		}
@@ -352,23 +346,6 @@ log::add('synovideo', 'debug', '########## SyncLecteur   -> 5');
 	}
 	
 	/*     * *********************Methode d'instance************************* */
-	public function cron15(){
-	/*	
-		$obj=synovideo::appelURL('SYNO.VideoStation.RemotePlayer','list',null,null,null,null);
-		foreach( synovideo::byType('synovideo') as $eqLogic){
-			$actif=false;
-			foreach ($obj->data->players as $player){
-				if($eqLogic->getLogicalId()==$player->id){
-					log::add('synovideo', 'debug', ' Lecteur actif ' . $player->name );
-					$actif=true;
-				}
-			}
-			$eqLogic->setIsEnable($actif);
-			$eqLogic->save();
-		}
-	*/
-		
-	}
 	
 	public function preSave() {
 		$this->setCategory('multimedia', 1);
@@ -895,7 +872,7 @@ log::add('synovideo', 'debug', '########## SyncLecteur   -> 5');
 		return $result;
 }
 	
-	public static function appelURL($API, $method=null, $action=null, $player=null, $value=null, $libre=null,$version=null) {
+	public static function appelURL($API, $method=null, $action=null, $player=null, $value=null, $libre=null) {
 		//Construit l'URL, l'appel et retourne 
 		$url=config::byKey('SYNO.conf.url','synovideo');
 		$sessionsid=config::byKey('SYNO.SID.Session','synovideo');
@@ -904,9 +881,7 @@ log::add('synovideo', 'debug', '########## SyncLecteur   -> 5');
 		$apiName = 'SYNO.API.Auth';
 		$apiPath = $arrAPI['path'];
 		$apiVersion = $arrAPI['version'];
-		if($version !== null){
-			$apiVersion = $version;
-		}
+        
 				
 		$fURL = $url.'/webapi/'.$apiPath.'?api=' . $API . '&version='.$apiVersion;
 			if($method !== null){
@@ -941,16 +916,17 @@ log::add('synovideo', 'debug', '########## SyncLecteur   -> 5');
 			if( $obj->error->code != "500" ) {
 				log::add('synovideo', 'error',' Appel de l\'API : ' . $API . ' en erreur, url : ' . $fURL . ' code : ' . $obj->error->code );
 			}
-			if( $obj->error->code == "105" ){ // || $obj->error->code=="106" || $obj->error->code=="107" ){
-				log::add('synovideo', 'info',' Réinitialisation de la connection ' );
-				self::getSid();
+			if( $obj->error->code == "105" || $obj->error->code=="119" ){ // || $obj->error->code=="106" || $obj->error->code=="107" ){
+				self::deleteSid();
+				if (config::byKey('syno2auth','synovideo')=='') {
+                    log::add('synovideo', 'info',' Réinitialisation de la connection ' );
+                    self::getSid();
+                }else{
+                    self::deamon_stop();
+                    log::add('synovideo', 'info',' Une nouvelle clé est nécéssaire pour l\'authentification ' );
+                }
+                
 			}
-		/*
-		}else{
-			if($obj->success == "true"){
-			
-			}
-		*/
 		}
 		return $obj;
 	}
@@ -1026,12 +1002,17 @@ log::add('synovideo', 'debug', '########## SyncLecteur   -> 5');
 	}
 	
 	public function getSid(){ //fini
+        if (config::byKey('SYNO.SID.Session', 'synovideo') != '') {
+            log::add('synovideo', 'debug',' La session existe déjà ' );
+			return true;
+		}
 		log::add('synovideo', 'debug',' Création de la session - Début ' );
 		cache::set( 'SYNO.tacheV.off', true, 0,null) ;
 		
 		$url=config::byKey('SYNO.conf.url','synovideo');
 		$login=urlencode(config::byKey('synoUser','synovideo'));
 		$pass=urlencode(config::byKey('synoPwd','synovideo'));
+        $auth=urlencode(config::byKey('syno2auth','synoaudio'));
 
 		$arrAPI=config::byKey('SYNO.API.Auth','synovideo');
 			
@@ -1040,7 +1021,7 @@ log::add('synovideo', 'debug', '########## SyncLecteur   -> 5');
 		$apiVersion = $arrAPI['version'];
 		
 		//Login and creating SID
-		$fURL = $url.'/webapi/'. $apiPath .'?api=' . $apiName . '&method=Login&version='. $apiVersion .'&account='.$login.'&passwd='.$pass.'&session=VideoStation&format=sid';
+		$fURL = $url.'/webapi/'. $apiPath .'?api=' . $apiName . '&method=Login&version='. $apiVersion .'&account='.$login.'&passwd='.$pass.'&session=VideoStation&format=sid&otp_code=' . $auth .'&enable_device_token=yes';
 		//$json = file_get_contents($fURL);
 		$json = synovideo::getCurlPage($fURL);
 		$obj = json_decode($json);
