@@ -1,7 +1,7 @@
 {
 	"id" : "synovideo",
 	"name" : "Syno Video Station",
-    "version" : "10",
+    "version" : "11",
 	"description" : "Plugin pour Synology Video Station",
 	"licence" : "AGPL",
 	"author" : "nexus79000",

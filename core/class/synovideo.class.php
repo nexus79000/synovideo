@@ -321,13 +321,13 @@ class synovideo extends eqLogic {
 				$eqLogic->setDisplay('pgBackColor','#83B700');
 				//Sauvegarde
 				$eqLogic->save();
-			}else{
-				$eqLogic->setConfiguration('password_protected', $player->password_protected);
-				$eqLogic->setConfiguration('seekable', $player->seekable);
-				$eqLogic->setConfiguration('volume_adjustable', $player->volume_adjustable);
-				$eqLogic->setConfiguration('type', $player->type);
-
-				$eqLogic->save();
+		//	}else{
+		//		$eqLogic->setConfiguration('password_protected', $player->password_protected);
+		//		$eqLogic->setConfiguration('seekable', $player->seekable);
+		//		$eqLogic->setConfiguration('volume_adjustable', $player->volume_adjustable);
+		//		$eqLogic->setConfiguration('type', $player->type);
+        //
+		//		$eqLogic->save();
 			}
 		}
 		//refresh de la page
@@ -1012,7 +1012,7 @@ class synovideo extends eqLogic {
 		$url=config::byKey('SYNO.conf.url','synovideo');
 		$login=urlencode(config::byKey('synoUser','synovideo'));
 		$pass=urlencode(config::byKey('synoPwd','synovideo'));
-        $auth=urlencode(config::byKey('syno2auth','synoaudio'));
+        $auth=urlencode(config::byKey('syno2auth','synovideo'));
 
 		$arrAPI=config::byKey('SYNO.API.Auth','synovideo');
 			
@@ -1021,7 +1021,7 @@ class synovideo extends eqLogic {
 		$apiVersion = $arrAPI['version'];
 		
 		//Login and creating SID
-		$fURL = $url.'/webapi/'. $apiPath .'?api=' . $apiName . '&method=Login&version='. $apiVersion .'&account='.$login.'&passwd='.$pass.'&session=VideoStation&format=sid&otp_code=' . $auth .'&enable_device_token=yes';
+		$fURL = $url.'/webapi/'. $apiPath .'?api=' . $apiName . '&method=login&version='. $apiVersion .'&account='.$login.'&passwd='.$pass.'&session=VideoStation&format=sid&otp_code=' . $auth .'&enable_device_token=yes';
 		//$json = file_get_contents($fURL);
 		$json = synovideo::getCurlPage($fURL);
 		$obj = json_decode($json);

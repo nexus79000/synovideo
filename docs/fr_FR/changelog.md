@@ -1,7 +1,15 @@
 ﻿Change Log
 ==========
 
-version 4
+version 12
+----------
+* Correction bug (DSM 7.0)
+
+version 11
+----------
+* Correction double authentification
+
+version 9
 ----------
 * Correction du lancement du demon
 * Ajout double authentification
