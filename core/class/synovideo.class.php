@@ -1058,8 +1058,8 @@ class synovideo extends eqLogic {
 			$json = synovideo::getCurlPage($fURL);
 			$obj = json_decode($json);
 			if($obj->success != "true"){
+                config::remove('SYNO.SID.Session','synovideo');
 				log::add('synovideo', 'error',' Destruction de la session en erreur, code : ' . $obj->error->code );
-				exit();
 			}else{
 				//authentification successful
 				config::remove('SYNO.SID.Session','synovideo');
