@@ -219,7 +219,7 @@ class synovideo extends eqLogic {
 							$video_type=$obj->data->type;
 							$video_id=$obj->data->video_id;
 							
-							$img_poster='plugins/synovideo/docs/images/syno_poster_default.png';
+							$img_poster='plugins/synovideo/desktop/images/syno_poster_default.png';
 							$changed = $eqLogic->checkAndUpdateCmd('movie_image', $img_poster) || $changed;
 						}
 					}
@@ -341,7 +341,7 @@ class synovideo extends eqLogic {
 	}
 	
 	public static function purgePlugin() {
-		$file_mask=dirname(__FILE__) . '/../../docs/images/syno_poster_*_*.jpg';
+		$file_mask=dirname(__FILE__) . '/../../desktop/images/syno_poster_*_*.jpg';
 		shell_exec('rm -rf ' . $file_mask);
 	}
 	
@@ -1339,7 +1339,7 @@ class synovideo extends eqLogic {
 	
 	public static function getPoster($_type,$_id){
 		
-		$img_poster = 'plugins/synovideo/docs/images/syno_poster_' . $_type . '_' . $_id . '.jpg';
+		$img_poster = 'plugins/synovideo/desktop/images/syno_poster_' . $_type . '_' . $_id . '.jpg';
 		if (!file_exists(dirname(__FILE__) . '/../../../../'. $img_poster)) {
 			log::add('synovideo', 'debug', ' Chargement du poster ' . $_type . '_' . $_id );
 			$r_url = config::byKey('SYNO.conf.url','synovideo');
@@ -1347,7 +1347,7 @@ class synovideo extends eqLogic {
 			//				   webapi/entry.cgi?type=tvshow&id=19&api=SYNO.VideoStation2.Poster&method=get&version=1&_sid=pYjje4wG3Nkt.14C0MGN304200
 			$poster=$r_url . '/webapi/entry.cgi?api=SYNO.VideoStation2.Poster&method=get&version=1&id=' . $_id . '&type=' . $_type . '&_sid=' . $sessionsid; 
 			if (!stristr(synovideo::getCurlPage($poster),'not found')){
-				file_put_contents(dirname(__FILE__) . '/../../../../plugins/synovideo/docs/images/syno_poster_' . $_type . '_' . $_id . '.jpg', synovideo::getCurlPage($poster));
+				file_put_contents(dirname(__FILE__) . '/../../../../plugins/synovideo/desktop/images/syno_poster_' . $_type . '_' . $_id . '.jpg', synovideo::getCurlPage($poster));
 			} else {
 				log::add('synovideo', 'debug', ' Pas de poster ');
 				if (!file_exists(dirname(__FILE__) . '/../../../../'. $img_poster)) {
@@ -1400,7 +1400,7 @@ class synovideo extends eqLogic {
 			if (file_exists(dirname(__FILE__) . '/../../../../'. $img) && filesize(dirname(__FILE__) . '/../../../../'. $img) > 110) {
 				$replace['#thumbnail#'] = $img . '?time=' .time();
 			} else {
-				$replace['#thumbnail#'] = 'plugins/synovideo/docs/images/syno_poster_default.png?time=' .time();
+				$replace['#thumbnail#'] = 'plugins/synovideo/desktop/images/syno_poster_default.png?time=' .time();
 			}
 		}
 	

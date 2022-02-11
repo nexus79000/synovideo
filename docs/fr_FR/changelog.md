@@ -1,6 +1,10 @@
 ﻿Change Log
 ==========
 
+version 13
+----------
+* Correction evolution 4.2.x 
+
 version 12
 ----------
 * Correction bug (DSM 7.0)
